@@ -667,11 +667,23 @@ run_continual_mode(const location_provider_t *provider,
 	int prev_disabled = 1;
 	int disabled = 0;
 	int location_available = 1;
+	char inverted = 0;
 	while (1) {
 		/* Check to see if disable signal was caught */
 		if (disable && !done) {
 			disabled = !disabled;
 			disable = 0;
+		}
+
+		/* Check to see if invert signal was caught */
+		if (invert) {
+			inverted = !inverted;
+			invert = 0;
+
+			if (verbose) {
+				printf(_("Inverted display: %s\n"), inverted ?
+					   _("Enabled") : _("Disabled"));
+			}
 		}
 
 		/* Check to see if exit signal was caught */
@@ -800,6 +812,8 @@ run_continual_mode(const location_provider_t *provider,
 				       target_interp.brightness);
 			}
 		}
+
+		interp.inverted = !disabled && inverted;
 
 		/* Adjust temperature */
 		r = method->set_temperature(

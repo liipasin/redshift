@@ -281,6 +281,27 @@ interpolate_color(float a, const float *c1, const float *c2, float *c)
 	c[2] = (1.0-a)*c1[2] + a*c2[2];
 }
 
+static void
+invert_ramp_component(uint16_t *ramp, unsigned int size)
+{
+	if (size <= 1) {
+		return;
+	}
+	for (unsigned low = 0, high = size - 1; low < high; ++low, --high) {
+		uint16_t tmp = ramp[high];
+		ramp[high] = ramp[low];
+		ramp[low] = tmp;
+	}
+}
+
+static void
+invert_ramp(uint16_t *r, uint16_t *g, uint16_t *b, unsigned int size)
+{
+	invert_ramp_component(r, size);
+	invert_ramp_component(g, size);
+	invert_ramp_component(b, size);
+}
+
 /* Helper macro used in the fill functions */
 #define F(Y, C)  pow((Y) * setting->brightness * \
 		     white_point[C], 1.0/setting->gamma[C])
@@ -289,6 +310,10 @@ void
 colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b,
 	       int size, const color_setting_t *setting)
 {
+	if (setting->inverted) {
+		invert_ramp(gamma_r, gamma_g, gamma_b, size);
+	}
+
 	/* Approximate white point */
 	float white_point[3];
 	float alpha = (setting->temperature % 100) / 100.0;
@@ -306,10 +331,35 @@ colorramp_fill(uint16_t *gamma_r, uint16_t *gamma_g, uint16_t *gamma_b,
 	}
 }
 
+static void
+invert_ramp_component_float(float *ramp, unsigned int size)
+{
+	if (size <= 1) {
+		return;
+	}
+	for (unsigned low = 0, high = size - 1; low < high; ++low, --high) {
+		float tmp = ramp[high];
+		ramp[high] = ramp[low];
+		ramp[low] = tmp;
+	}
+}
+
+static void
+invert_ramp_float(float *r, float *g, float *b, unsigned int size)
+{
+	invert_ramp_component_float(r, size);
+	invert_ramp_component_float(g, size);
+	invert_ramp_component_float(b, size);
+}
+
 void
 colorramp_fill_float(float *gamma_r, float *gamma_g, float *gamma_b,
 		     int size, const color_setting_t *setting)
 {
+	if (setting->inverted) {
+		invert_ramp_float(gamma_r, gamma_g, gamma_b, size);
+	}
+
 	/* Approximate white point */
 	float white_point[3];
 	float alpha = (setting->temperature % 100) / 100.0;
